@@ -21,12 +21,84 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import com.example.drbanana.R
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+
+
+suspend fun getBitmapFromUri(context: Context, uri: Uri, targetWidth: Int, targetHeight: Int): Bitmap? {
+    return withContext(Dispatchers.IO) {
+        try {
+            context.contentResolver.openInputStream(uri)?.use { inputStream ->
+                val originalBitmap = BitmapFactory.decodeStream(inputStream)
+                originalBitmap?.let {
+                    resizeBitmap(it, targetWidth, targetHeight)
+                }
+            }
+        } catch (e: Exception) {
+            Log.e("getBitmapFromUri", "Error decoding bitmap from URI: $uri", e)
+            null
+        }
+    }
+}
+
+fun resizeBitmap(bitmap: Bitmap, targetWidth: Int, targetHeight: Int): Bitmap {
+    return Bitmap.createScaledBitmap(bitmap, targetWidth, targetHeight, true)
+}
+
+fun handleImageCapture(
+    success: Boolean,
+    imageUri: Uri?,
+    context: Context,
+    navController: NavHostController,
+    predictionResultState: MutableState<String>,
+    onImageCaptured: (Uri?) -> Unit
+) {
+    Log.d("handleImageCapture", "Capture success: $success, imageUri: $imageUri")
+    if (success) {
+        imageUri?.let { uri ->
+            CoroutineScope(Dispatchers.Main).launch {
+                val bitmap = getBitmapFromUri(context, uri, 224, 224)
+                if (bitmap != null) {
+                    Log.d("Scanner", "Bitmap dimensions: ${bitmap.width} x ${bitmap.height}")
+                    val predictionResult = processImageWithModel(context, bitmap)
+                    predictionResultState.value = predictionResult.joinToString(", ")
+                    navController.navigate("result/${predictionResultState.value}/${uri}")
+                    onImageCaptured(uri)
+                } else {
+                    Log.e("Scanner", "Failed to retrieve bitmap from URI: $imageUri")
+                }
+            }
+        }
+    }
+}
+
+suspend fun handleImageSelection(
+    uri: Uri?,
+    context: Context,
+    navController: NavHostController,
+    predictionResultState: MutableState<String>,
+    imageUriState: MutableState<Uri?>,
+    onImageCaptured: (Uri?) -> Unit
+) {
+    uri?.let {
+        imageUriState.value = it
+        val bitmap = getBitmapFromUri(context, it, 224, 224)
+        if (bitmap != null) {
+            val predictionResult = processImageWithModel(context, bitmap)
+            predictionResultState.value = predictionResult.joinToString(", ")
+            navController.navigate("result/${predictionResultState.value}/${it}")
+            onImageCaptured(it)
+        }
+    }
+}
 
 @Composable
 fun ScanButton(onImageCaptured: (Uri?) -> Unit, navController: NavHostController) {
     val context = LocalContext.current
-    val imageUriState = remember { mutableStateOf<Uri?>(null) }
     val showDialog = remember { mutableStateOf(false) }
+    val imageUriState = remember { mutableStateOf<Uri?>(null) }
     val predictionResultState = remember { mutableStateOf("") }
 
     val cameraLauncher = rememberLauncherForActivityResult(
@@ -38,7 +110,9 @@ fun ScanButton(onImageCaptured: (Uri?) -> Unit, navController: NavHostController
     val galleryLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
     ) { uri ->
-        handleImageSelection(uri, context, navController, predictionResultState, imageUriState, onImageCaptured)
+        CoroutineScope(Dispatchers.Main).launch {
+            handleImageSelection(uri, context, navController, predictionResultState, imageUriState, onImageCaptured)
+        }
     }
 
     if (showDialog.value) {
@@ -57,7 +131,9 @@ fun ScanButton(onImageCaptured: (Uri?) -> Unit, navController: NavHostController
     }
 
     Button(
-        onClick = { showDialog.value = true },
+        onClick = {
+            showDialog.value = true
+        },
         colors = ButtonDefaults.buttonColors(
             containerColor = Color(0xFF61AF2B),
             contentColor = Color.White
@@ -80,58 +156,6 @@ fun ScanButton(onImageCaptured: (Uri?) -> Unit, navController: NavHostController
     }
 }
 
-private fun handleImageCapture(
-    success: Boolean,
-    uri: Uri?,
-    context: Context,
-    navController: NavHostController,
-    predictionResultState: MutableState<String>,
-    onImageCaptured: (Uri?) -> Unit
-) {
-    if (success) {
-        val bitmap = uri?.let { getBitmapFromUri(context, it) }
-        if (bitmap != null) {
-            Log.d("ScanButton", "Bitmap captured: $bitmap")
-            val predictionResult = processImageWithModel(context, bitmap)
-            predictionResultState.value = predictionResult.joinToString(", ")
-            Log.d("ScanButton", "Prediction result: $predictionResult")
-            navController.navigate("result/${predictionResultState.value}")
-        }
-        onImageCaptured(uri)
-    } else {
-        Log.d("ScanButton", "Image capture failed")
-        onImageCaptured(null)
-    }
-}
-
-private fun handleImageSelection(
-    uri: Uri?,
-    context: Context,
-    navController: NavHostController,
-    predictionResultState: MutableState<String>,
-    imageUriState: MutableState<Uri?>,
-    onImageCaptured: (Uri?) -> Unit
-) {
-    if (uri != null) {
-        Log.d("ScanButton", "Image selected: $uri")
-        val bitmap = getBitmapFromUri(context, uri)
-        if (bitmap != null) {
-            Log.d("ScanButton", "Bitmap selected: $bitmap")
-            val predictionResult = processImageWithModel(context, bitmap)
-            predictionResultState.value = predictionResult.joinToString(", ")
-            Log.d("ScanButton", "Prediction result: $predictionResult")
-            navController.navigate("result/${predictionResultState.value}")
-        } else {
-            Log.d("ScanButton", "Failed to decode bitmap from URI: $uri")
-        }
-        imageUriState.value = uri
-        onImageCaptured(uri)
-    } else {
-        Log.d("ScanButton", "No image selected")
-        onImageCaptured(null)
-    }
-}
-
 private fun createImageUri(context: Context): Uri? {
     return context.contentResolver.insert(
         MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
@@ -141,41 +165,6 @@ private fun createImageUri(context: Context): Uri? {
             put(MediaStore.Images.Media.RELATIVE_PATH, "Pictures/ComposeCamera")
         }
     )
-}
-
-fun getBitmapFromUri(context: Context, uri: Uri): Bitmap? {
-    return try {
-        val inputStream = context.contentResolver.openInputStream(uri)
-        BitmapFactory.decodeStream(inputStream)
-    } catch (e: Exception) {
-        Log.e("getBitmapFromUri", "Error decoding bitmap from URI: $uri", e)
-        null
-    }
-}
-
-fun processImageWithModel(context: Context, bitmap: Bitmap): FloatArray {
-    val modelInference = ModelInference(context)
-    val input = convertBitmapToFloatArray(bitmap)
-    return modelInference.runInference(input)
-}
-
-fun convertBitmapToFloatArray(bitmap: Bitmap): FloatArray {
-    val width = 224
-    val height = 224
-    val floatArray = FloatArray(width * height * 3)
-    val resizedBitmap = Bitmap.createScaledBitmap(bitmap, width, height, true)
-
-    for (y in 0 until height) {
-        for (x in 0 until width) {
-            val pixel = resizedBitmap.getPixel(x, y)
-            val index = (y * width + x) * 3
-            floatArray[index] = (pixel shr 16 and 0xFF) / 255.0f // Red
-            floatArray[index + 1] = (pixel shr 8 and 0xFF) / 255.0f // Green
-            floatArray[index + 2] = (pixel and 0xFF) / 255.0f // Blue
-        }
-    }
-    Log.d("convertBitmapToFloatArray", "Float array: ${floatArray.joinToString(", ")}")
-    return floatArray
 }
 
 @Composable
@@ -195,4 +184,11 @@ fun ChooseImageSourceDialog(showDialog: MutableState<Boolean>, onChoose: (String
             }
         }
     )
+}
+
+fun processImageWithModel(context: Context, bitmap: Bitmap): List<String> {
+    val modelInference = ModelInference(context)
+    val input = preprocessInput(bitmap)
+    val output = modelInference.runInference(input)
+    return postprocessOutput(output)
 }

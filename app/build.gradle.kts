@@ -66,5 +66,7 @@ dependencies {
     implementation("androidx.compose.material:material:1.7.5")
     implementation("androidx.compose.material3:material3:1.2.0")
     implementation("androidx.activity:activity-compose:1.8.0")
-    implementation("org.tensorflow:tensorflow-lite:2.11.0")
+    implementation("io.coil-kt:coil-compose:2.4.0")
+    implementation("org.tensorflow:tensorflow-lite:2.9.0")
+    implementation("org.tensorflow:tensorflow-lite-support:0.3.1")
 }
