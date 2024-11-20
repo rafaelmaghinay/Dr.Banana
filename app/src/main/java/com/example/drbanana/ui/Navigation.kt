@@ -84,15 +84,13 @@ fun NavigationHost(navController: NavHostController) {
         composable("History") {
             HistoryScreen()
         }
-        /*composable(
+        composable(
             "result/{predictionResult}",
             arguments = listOf(navArgument("predictionResult") { type = NavType.StringType })
         ) { backStackEntry ->
             val predictionResult = backStackEntry.arguments?.getString("predictionResult") ?: ""
             ResultScreen(predictionResult)
         }
-
-         */
     }
 }
 

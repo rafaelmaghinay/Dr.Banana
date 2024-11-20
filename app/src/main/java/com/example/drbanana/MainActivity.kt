@@ -9,15 +9,8 @@ import com.example.drbanana.ui.theme.DrBananaTheme
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.navigation.NavHostController
-import androidx.navigation.NavType
-import androidx.navigation.compose.NavHost
-import androidx.navigation.compose.composable
-import androidx.navigation.navArgument
-import com.example.drbanana.ui.HomeScreen
 import com.example.drbanana.ui.Navigation
 import com.example.drbanana.ui.SplashScreen
-import com.example.drbanana.ui.theme.ResultScreen
 import kotlinx.coroutines.delay
 
 
