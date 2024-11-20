@@ -9,6 +9,7 @@ pluginManagement {
         }
         mavenCentral()
         gradlePluginPortal()
+        jcenter()  // In case older versions are needed (TensorFlow has some older dependencies here)
     }
 }
 dependencyResolutionManagement {
