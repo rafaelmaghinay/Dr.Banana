@@ -1,5 +1,6 @@
 package com.example.drbanana.ui
 
+import ResultScreen
 import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -84,7 +85,7 @@ fun NavigationHost(navController: NavHostController) {
         composable("History") {
             HistoryScreen()
         }
-        /*composable(
+        composable(
             "result/{predictionResult}",
             arguments = listOf(navArgument("predictionResult") { type = NavType.StringType })
         ) { backStackEntry ->
@@ -92,7 +93,7 @@ fun NavigationHost(navController: NavHostController) {
             ResultScreen(predictionResult)
         }
 
-         */
+
     }
 }
 
