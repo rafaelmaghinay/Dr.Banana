@@ -1,6 +1,7 @@
 package com.example.drbanana.ui
 
 import ResultScreen
+import android.net.Uri
 import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -37,7 +38,6 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.example.drbanana.R
 import com.example.drbanana.ui.theme.DrBananaTheme
-import com.example.drbanana.ui.theme.ResultScreen
 
 @Composable
 fun Navigation() {
@@ -85,14 +85,18 @@ fun NavigationHost(navController: NavHostController) {
         composable("History") {
             HistoryScreen()
         }
+
         composable(
-            "result/{predictionResult}",
-            arguments = listOf(navArgument("predictionResult") { type = NavType.StringType })
+            "result/{predictionResult}/{imageUri}",
+            arguments = listOf(
+                navArgument("predictionResult") { type = NavType.StringType },
+                navArgument("imageUri") { type = NavType.StringType }
+            )
         ) { backStackEntry ->
             val predictionResult = backStackEntry.arguments?.getString("predictionResult") ?: ""
-            ResultScreen(predictionResult)
+            val imageUri = backStackEntry.arguments?.getString("imageUri")?.let { Uri.parse(it) }
+            ResultScreen(predictionResult, imageUri)
         }
-
 
     }
 }
