@@ -36,6 +36,7 @@ fun HistoryScreen() {
         Text(
             text = "Your Diagnoses",
             fontWeight = Bold,
+            color = Color.Black,
             fontSize = 24.sp,
             modifier = Modifier.padding(16.dp)
         )

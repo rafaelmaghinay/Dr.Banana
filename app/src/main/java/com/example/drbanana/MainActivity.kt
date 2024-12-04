@@ -9,9 +9,11 @@ import com.example.drbanana.ui.theme.DrBananaTheme
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.core.app.ActivityCompat
 import com.example.drbanana.ui.Navigation
 import com.example.drbanana.ui.SplashScreen
 import kotlinx.coroutines.delay
+import android.Manifest
 
 
 class MainActivity : ComponentActivity() {
@@ -19,6 +21,13 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             DrBananaTheme {
+                // Request permissions at runtime
+                val permissions = arrayOf(
+                    Manifest.permission.CAMERA,
+                    Manifest.permission.WRITE_EXTERNAL_STORAGE,
+                    Manifest.permission.READ_EXTERNAL_STORAGE
+                )
+                ActivityCompat.requestPermissions(this, permissions, 0)
                 AppStart()
             }
         }

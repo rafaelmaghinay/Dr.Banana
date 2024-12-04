@@ -76,7 +76,7 @@ fun HomeScreen(navController: NavHostController) {
                                 alignment = Alignment.Center
                             )
                             Text(
-                                text = "Stand next to your tree",
+                                text = "Stand next to your Leaf",
                                 fontSize = 8.sp,
                                 color = Color.Black,
                                 textAlign = TextAlign.Center,
@@ -94,7 +94,7 @@ fun HomeScreen(navController: NavHostController) {
                                 alignment = Alignment.Center
                             )
                             Text(
-                                text = "Scan Your Tree",
+                                text = "Scan Your Leaf",
                                 fontSize = 8.sp,
                                 color = Color.Black,
                                 textAlign = TextAlign.Center,

@@ -5,6 +5,7 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.net.Uri
+import android.os.Environment
 import android.provider.MediaStore
 import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -19,115 +20,38 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.content.FileProvider
 import androidx.navigation.NavHostController
 import com.example.drbanana.R
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
+import com.example.drbanana.classifyImage
+import java.io.File
 
-
-suspend fun getBitmapFromUri(context: Context, uri: Uri, targetWidth: Int, targetHeight: Int): Bitmap? {
-    return withContext(Dispatchers.IO) {
-        try {
-            context.contentResolver.openInputStream(uri)?.use { inputStream ->
-                val originalBitmap = BitmapFactory.decodeStream(inputStream)
-                originalBitmap?.let {
-                    resizeBitmap(it, targetWidth, targetHeight)
-                }
-            }
-        } catch (e: Exception) {
-            Log.e("getBitmapFromUri", "Error decoding bitmap from URI: $uri", e)
-            null
-        }
-    }
-}
-
-fun resizeBitmap(bitmap: Bitmap, targetWidth: Int, targetHeight: Int): Bitmap {
-    return Bitmap.createScaledBitmap(bitmap, targetWidth, targetHeight, true)
-}
-
-fun handleImageCapture(
-    success: Boolean,
-    imageUri: Uri?,
-    context: Context,
-    navController: NavHostController,
-    predictionResultState: MutableState<String>,
-    onImageCaptured: (Uri?) -> Unit
-) {
-    Log.d("handleImageCapture", "Capture success: $success, imageUri: $imageUri")
-    if (success) {
-        imageUri?.let { uri ->
-            CoroutineScope(Dispatchers.Main).launch {
-                val bitmap = getBitmapFromUri(context, uri, 224, 224)
-                if (bitmap != null) {
-                    Log.d("Scanner", "Bitmap dimensions: ${bitmap.width} x ${bitmap.height}")
-                    val predictionResult = processImageWithModel(context, bitmap)
-                    predictionResultState.value = predictionResult.joinToString(", ")
-                    navController.navigate("result/${predictionResultState.value}/${uri}")
-                    onImageCaptured(uri)
-                } else {
-                    Log.e("Scanner", "Failed to retrieve bitmap from URI: $imageUri")
-                }
-            }
-        }
-    }
-}
-
-suspend fun handleImageSelection(
-    uri: Uri?,
-    context: Context,
-    navController: NavHostController,
-    predictionResultState: MutableState<String>,
-    imageUriState: MutableState<Uri?>,
-    onImageCaptured: (Uri?) -> Unit
-) {
-    uri?.let {
-        imageUriState.value = it
-        val bitmap = getBitmapFromUri(context, it, 224, 224)
-        if (bitmap != null) {
-            val predictionResult = processImageWithModel(context, bitmap)
-            predictionResultState.value = predictionResult.joinToString(", ")
-            navController.navigate("result/${predictionResultState.value}/${it}")
-            onImageCaptured(it)
-        }
-    }
-}
+import kotlin.compareTo
+import kotlin.toString
 
 @Composable
 fun ScanButton(onImageCaptured: (Uri?) -> Unit, navController: NavHostController) {
     val context = LocalContext.current
     val showDialog = remember { mutableStateOf(false) }
-    val imageUriState = remember { mutableStateOf<Uri?>(null) }
-    val predictionResultState = remember { mutableStateOf("") }
-
-    val cameraLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.TakePicture()
-    ) { success ->
-        handleImageCapture(success, imageUriState.value, context, navController, predictionResultState, onImageCaptured)
-    }
-
-    val galleryLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.GetContent()
-    ) { uri ->
-        CoroutineScope(Dispatchers.Main).launch {
-            handleImageSelection(uri, context, navController, predictionResultState, imageUriState, onImageCaptured)
-        }
-    }
+    val bitmap = remember { mutableStateOf<Bitmap?>(null) }
+    val classificationResults = remember { mutableStateOf<FloatArray?>(null) }
 
     if (showDialog.value) {
-        ChooseImageSourceDialog(showDialog) { option ->
-            if (option == "Take Picture") {
-                val imageUri = createImageUri(context)
-                imageUri?.let {
-                    imageUriState.value = it
-                    cameraLauncher.launch(it)
+        ImagePicker(onImageCaptured = { uri ->
+            uri?.let {
+                bitmap.value = createBitmapFromUri(context, it)
+                bitmap.value?.let { bmp ->
+                    if (classificationResults.value == null) {
+                        classificationResults.value = classifyImage(context, bmp)
+                        Log.d("ScanButton", "Classification results: ${classificationResults.value}")
+                        navController.navigate(
+                            "result/${Uri.encode(it.toString())}/${classificationResults.value?.joinToString(",") ?: ""}"
+                        )
+                    }
                 }
-            } else {
-                galleryLauncher.launch("image/*")
             }
             showDialog.value = false
-        }
+        }, onDismiss = { showDialog.value = false })
     }
 
     Button(
@@ -140,7 +64,7 @@ fun ScanButton(onImageCaptured: (Uri?) -> Unit, navController: NavHostController
         ),
         shape = androidx.compose.foundation.shape.RoundedCornerShape(8.dp),
         modifier = Modifier
-            .width(150.dp)
+            .fillMaxWidth()
             .height(50.dp)
     ) {
         Row(modifier = Modifier.padding(8.dp)) {
@@ -156,39 +80,81 @@ fun ScanButton(onImageCaptured: (Uri?) -> Unit, navController: NavHostController
     }
 }
 
-private fun createImageUri(context: Context): Uri? {
-    return context.contentResolver.insert(
-        MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
-        ContentValues().apply {
-            put(MediaStore.MediaColumns.DISPLAY_NAME, "new_image.jpg")
-            put(MediaStore.MediaColumns.MIME_TYPE, "image/jpeg")
-            put(MediaStore.Images.Media.RELATIVE_PATH, "Pictures/ComposeCamera")
+
+@Composable
+fun ImagePicker(onImageCaptured: (Uri?) -> Unit, onDismiss: () -> Unit) {
+    val context = LocalContext.current
+    val imageUri = remember { mutableStateOf<Uri?>(null) }
+    val galleryLauncher = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
+        Log.d("ImagePicker", "Selected URI: $uri")
+        onImageCaptured(uri)
+    }
+    val cameraLauncher = rememberLauncherForActivityResult(ActivityResultContracts.TakePicture()) { success: Boolean ->
+        if (success) {
+            Log.d("ImagePicker", "Captured URI: ${imageUri.value}")
+            onImageCaptured(imageUri.value)
+        } else {
+            onDismiss()
         }
-    )
+    }
+
+    chooseImageSource(context, onOptionSelected = { option ->
+        when (option) {
+            "Gallery" -> galleryLauncher.launch("image/*")
+            "Camera" -> {
+                val uri = createImageUri(context)
+                imageUri.value = uri
+                cameraLauncher.launch(uri)
+            }
+        }
+    }, onDismiss = onDismiss)
 }
 
 @Composable
-fun ChooseImageSourceDialog(showDialog: MutableState<Boolean>, onChoose: (String) -> Unit) {
-    AlertDialog(
-        onDismissRequest = { showDialog.value = false },
-        title = { Text("Choose an option") },
-        text = { Text("Do you want to take a picture or select from the gallery?") },
-        confirmButton = {
-            Button(onClick = { onChoose("Take Picture") }) {
-                Text("Take Picture")
-            }
-        },
-        dismissButton = {
-            Button(onClick = { onChoose("Select from Gallery") }) {
-                Text("Select from Gallery")
-            }
-        }
-    )
+fun chooseImageSource(context: Context, onOptionSelected: (String) -> Unit, onDismiss: () -> Unit) {
+    val showDialog = remember { mutableStateOf(true) }
+
+    if (showDialog.value) {
+        AlertDialog(
+            onDismissRequest = {
+                showDialog.value = false
+                onDismiss()
+            },
+            title = { Text(text = "Choose Image Source", color = Color.Black) },
+            text = { Text("Select an option to pick an image from gallery or capture using camera.", color = Color.Black) },
+            confirmButton = {
+                TextButton(onClick = {
+                    showDialog.value = false
+                    onOptionSelected("Gallery")
+                }) {
+                    Text("Gallery", color = Color(0xFF61AF2B))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = {
+                    showDialog.value = false
+                    onOptionSelected("Camera")
+                }) {
+                    Text("Camera", color = Color(0xFF61AF2B))
+                }
+            },
+            containerColor = Color.White
+        )
+    }
 }
 
-fun processImageWithModel(context: Context, bitmap: Bitmap): List<String> {
-    val modelInference = ModelInference(context)
-    val input = preprocessInput(bitmap)
-    val output = modelInference.runInference(input)
-    return postprocessOutput(output)
+fun createImageUri(context: Context): Uri {
+    val imagesDir = context.getExternalFilesDir(Environment.DIRECTORY_PICTURES)
+    val image = File(imagesDir, "image.jpg")
+    return FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", image)
+}
+
+
+fun createBitmapFromUri(context: Context, uri: Uri): Bitmap? {
+    val inputStream = context.contentResolver.openInputStream(uri)
+    val originalBitmap = BitmapFactory.decodeStream(inputStream)
+    inputStream?.close()
+
+    Log.d("createBitmapFromUri", "Bitmap: $originalBitmap")
+    return originalBitmap
 }

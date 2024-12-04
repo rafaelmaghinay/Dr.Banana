@@ -69,4 +69,6 @@ dependencies {
     implementation("io.coil-kt:coil-compose:2.4.0")
     implementation("org.tensorflow:tensorflow-lite:2.9.0")
     implementation("org.tensorflow:tensorflow-lite-support:0.3.1")
+    implementation("org.tensorflow:tensorflow-lite-metadata:0.1.0")
+    implementation("io.realm:realm-android-library:10.10.1")
 }

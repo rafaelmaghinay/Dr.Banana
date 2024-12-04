@@ -42,27 +42,33 @@ import com.example.drbanana.ui.theme.DrBananaTheme
 @Composable
 fun Navigation() {
     val navController = rememberNavController()
+    val currentDestination = navController.currentBackStackEntryAsState().value?.destination?.route
 
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = {
-                    Text("Dr.Banana",
-                          color = Color.Black,
+            if (currentDestination != "result/{imageUri}/{classificationResult}") {
+                TopAppBar(
+                    title = {
+                        Text("Dr.Banana",
+                            color = Color.Black,
                             fontWeight = FontWeight.Bold,)
-                        },
-                navigationIcon = {
-                    Image(painter = painterResource(id = R.drawable.bgremovedlogo), // Replace with your image resource
-                    contentDescription = "App Logo",
-                    modifier = Modifier.padding(8.dp)
-                    )
-                },
-                backgroundColor = Color(0xFFD0FFCF),
-            )
+                    },
+                    navigationIcon = {
+                        Image(painter = painterResource(id = R.drawable.bgremovedlogo), // Replace with your image resource
+                            contentDescription = "App Logo",
+                            modifier = Modifier.padding(8.dp)
+                        )
+                    },
+                    backgroundColor = Color(0xFFD0FFCF),
+                )
+            }
         },
         bottomBar = {
-            BottomNavigationBar(navController)
+            if (currentDestination != "result/{imageUri}/{classificationResult}") {
+                BottomNavigationBar(navController)
+            }
         }
+
     ) { innerPadding ->
         // Content of the Home Screen
         Box(
@@ -87,17 +93,17 @@ fun NavigationHost(navController: NavHostController) {
         }
 
         composable(
-            "result/{predictionResult}/{imageUri}",
+            "result/{imageUri}/{classificationResult}",
             arguments = listOf(
-                navArgument("predictionResult") { type = NavType.StringType },
-                navArgument("imageUri") { type = NavType.StringType }
+                navArgument("imageUri") { type = NavType.StringType },
+                navArgument("classificationResult") { type = NavType.StringType }
             )
         ) { backStackEntry ->
-            val predictionResult = backStackEntry.arguments?.getString("predictionResult") ?: ""
             val imageUri = backStackEntry.arguments?.getString("imageUri")?.let { Uri.parse(it) }
-            ResultScreen(predictionResult, imageUri)
+            val classificationResult = backStackEntry.arguments?.getString("classificationResult")
+            val floatArray = classificationResult?.split(",")?.map { it.toFloat() }?.toFloatArray()
+            ResultScreen(predictionResult = floatArray, imageUri = imageUri, navController)
         }
-
     }
 }
 
