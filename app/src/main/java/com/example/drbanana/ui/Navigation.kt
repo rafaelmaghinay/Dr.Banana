@@ -46,7 +46,7 @@ fun Navigation() {
 
     Scaffold(
         topBar = {
-            if (currentDestination != "result/{imageUri}/{classificationResult}") {
+            if (currentDestination != "result/{imageUri}/{classificationResult}" && currentDestination != "recommendations/{diseaseId}") {
                 TopAppBar(
                     title = {
                         Text("Dr.Banana",
@@ -64,7 +64,7 @@ fun Navigation() {
             }
         },
         bottomBar = {
-            if (currentDestination != "result/{imageUri}/{classificationResult}") {
+            if (currentDestination != "result/{imageUri}/{classificationResult}" && currentDestination != "recommendations/{diseaseId}") {
                 BottomNavigationBar(navController)
             }
         }
@@ -89,7 +89,7 @@ fun NavigationHost(navController: NavHostController) {
             HomeScreen(navController)
         }
         composable("History") {
-            HistoryScreen()
+            HistoryScreen(navController)
         }
 
         composable(
@@ -103,6 +103,11 @@ fun NavigationHost(navController: NavHostController) {
             val classificationResult = backStackEntry.arguments?.getString("classificationResult")
             val floatArray = classificationResult?.split(",")?.map { it.toFloat() }?.toFloatArray()
             ResultScreen(predictionResult = floatArray, imageUri = imageUri, navController)
+        }
+
+        composable("recommendations/{diseaseId}") { backStackEntry ->
+            val diseaseId = backStackEntry.arguments?.getString("diseaseId")
+            RecommendationsScreen(diseaseId = diseaseId, navController)
         }
     }
 }

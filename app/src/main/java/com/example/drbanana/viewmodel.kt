@@ -37,21 +37,26 @@ class DiseaseViewModel : ViewModel() {
         }
     }
 
-    fun addDisease(context: Context, diseaseName: String, imageUri: String) {
+    fun addDisease(context: Context, diseaseName: String, imageUri: String, onDiseaseAdded: (ObjectId?) -> Unit) {
         viewModelScope.launch(Dispatchers.IO) {
             val realm = Realm.getDefaultInstance()
-            val filePath = saveImageLocally(context, imageUri) // Save image to app-controlled location
+            var diseaseId: ObjectId? = null
+            val localImagePath = saveImageLocally(context, imageUri)
             realm.executeTransaction {
                 val disease = Disease(
                     id = ObjectId(),
                     treeDisease = diseaseName,
-                    imageUri = filePath,
-                    dateTaken = Date()
+                    dateTaken = Date(),
+                    imageUri = localImagePath
                 )
                 it.insert(disease)
+                diseaseId = disease.id
             }
             realm.close()
             loadDiseases()
+            withContext(Dispatchers.Main) {
+                onDiseaseAdded(diseaseId)
+            }
         }
     }
 

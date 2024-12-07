@@ -38,6 +38,7 @@ import com.example.drbanana.ui.ImagePicker
 import com.example.drbanana.R
 import com.example.drbanana.ui.ScanButton
 import com.example.drbanana.ui.createBitmapFromUri
+import org.bson.types.ObjectId
 import kotlin.toString
 
 @Composable
@@ -47,6 +48,7 @@ fun ResultScreen(predictionResult: FloatArray?, imageUri: Uri?, navController: N
     val bitmap = remember { mutableStateOf<Bitmap?>(null) }
     var isFullScreen by remember { mutableStateOf(false) }
     val isSaved = remember { mutableStateOf(false) }
+    val savedDiseaseId = remember { mutableStateOf<ObjectId?>(null) }
     val screenHeight = LocalConfiguration.current.screenHeightDp.dp
     val halfScreenHeight = (screenHeight / 2) + 25.dp
     val targetHeight by animateDpAsState(targetValue = if (isFullScreen) screenHeight else halfScreenHeight, animationSpec = tween(durationMillis = 1000))
@@ -169,7 +171,9 @@ fun ResultScreen(predictionResult: FloatArray?, imageUri: Uri?, navController: N
                             .size(20.dp)
                             .clickable(enabled = !isSaved.value) {
                                 isSaved.value = true
-                                diseaseViewModel.addDisease(context, disease , imageUri.toString())
+                                diseaseViewModel.addDisease(context, disease, imageUri.toString()) { diseaseId ->
+                                    savedDiseaseId.value = diseaseId
+                                }
                             }
                     )
                 }
@@ -191,7 +195,19 @@ fun ResultScreen(predictionResult: FloatArray?, imageUri: Uri?, navController: N
 
                 Button(
                     onClick = {
-                        navController.navigate("home")
+                        if (isSaved.value) {
+                            savedDiseaseId.value?.let {
+                                navController.navigate("recommendations/${it.toString()}")
+                            }
+                        } else {
+                            isSaved.value = true
+                            diseaseViewModel.addDisease(context, disease, imageUri.toString()) { diseaseId ->
+                                savedDiseaseId.value = diseaseId
+                                diseaseId?.let {
+                                    navController.navigate("recommendations/${it.toString()}")
+                                }
+                            }
+                        }
                     },
                     colors = ButtonDefaults.buttonColors(
                         containerColor = Color(0xFF61F878),

@@ -27,6 +27,7 @@ import androidx.compose.ui.text.font.FontWeight.Companion.Bold
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavHostController
 import coil.compose.rememberAsyncImagePainter
 import com.example.drbanana.Disease
 import com.example.drbanana.DiseaseViewModel
@@ -34,7 +35,7 @@ import java.text.SimpleDateFormat
 import java.util.Locale
 
 @Composable
-fun HistoryScreen(diseaseViewModel: DiseaseViewModel = viewModel()) {
+fun HistoryScreen(navController : NavHostController, diseaseViewModel: DiseaseViewModel = viewModel()) {
 
     LaunchedEffect(Unit) {
         diseaseViewModel.loadDiseases()
@@ -67,7 +68,7 @@ fun HistoryScreen(diseaseViewModel: DiseaseViewModel = viewModel()) {
 
             LazyColumn(modifier = Modifier.fillMaxSize()) {
                 items(diseases) { disease ->
-                    DiseaseItem(disease)
+                    DiseaseItem(disease, navController)
                 }
             }
         }
@@ -75,7 +76,7 @@ fun HistoryScreen(diseaseViewModel: DiseaseViewModel = viewModel()) {
 }
 
 @Composable
-fun DiseaseItem(disease: Disease) {
+fun DiseaseItem(disease: Disease,  navController: NavHostController) {
     val diseaseViewModel : DiseaseViewModel = viewModel()
     val dateFormat = SimpleDateFormat("dd-MM-yyyy", Locale.getDefault())
     val formattedDate = dateFormat.format(disease.dateTaken)
@@ -84,6 +85,9 @@ fun DiseaseItem(disease: Disease) {
         modifier = Modifier
             .fillMaxWidth()
             .padding(16.dp)
+            .clickable {
+                navController.navigate("recommendations/${disease.id}")
+            }
     ) {
         Row{
             Box(
