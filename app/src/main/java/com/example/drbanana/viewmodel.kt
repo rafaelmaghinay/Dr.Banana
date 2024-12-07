@@ -60,6 +60,14 @@ class DiseaseViewModel : ViewModel() {
         }
     }
 
+    fun getDiseaseById(diseaseId: ObjectId): Disease? {
+        val realm = Realm.getDefaultInstance()
+        val disease = realm.where<Disease>().equalTo("id", diseaseId).findFirst()
+        val detachedDisease = disease?.let { realm.copyFromRealm(it) }
+        realm.close()
+        return detachedDisease
+    }
+
     private fun saveImageLocally(context: Context, imageUri: String): String {
         val uri = Uri.parse(imageUri)
         val inputStream: InputStream? = context.contentResolver.openInputStream(uri)
