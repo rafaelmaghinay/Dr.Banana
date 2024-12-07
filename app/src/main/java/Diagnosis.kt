@@ -1,4 +1,5 @@
-import android.R.attr.bitmap
+
+
 import android.graphics.Bitmap
 import android.net.Uri
 import android.util.Log
@@ -17,7 +18,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import coil.compose.rememberImagePainter
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
@@ -29,14 +29,15 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight.Companion.Bold
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
+import coil.compose.rememberAsyncImagePainter
+import com.example.drbanana.DiseaseViewModel
 import com.example.drbanana.classifyImage
 import com.example.drbanana.ui.ImagePicker
 import com.example.drbanana.R
 import com.example.drbanana.ui.ScanButton
 import com.example.drbanana.ui.createBitmapFromUri
-import kotlin.div
-import kotlin.text.compareTo
 import kotlin.toString
 
 @Composable
@@ -45,12 +46,13 @@ fun ResultScreen(predictionResult: FloatArray?, imageUri: Uri?, navController: N
     val showDialog = remember { mutableStateOf(false) }
     val bitmap = remember { mutableStateOf<Bitmap?>(null) }
     var isFullScreen by remember { mutableStateOf(false) }
-    var isSaved by remember { mutableStateOf(false) }
+    val isSaved = remember { mutableStateOf(false) }
     val screenHeight = LocalConfiguration.current.screenHeightDp.dp
     val halfScreenHeight = (screenHeight / 2) + 25.dp
     val targetHeight by animateDpAsState(targetValue = if (isFullScreen) screenHeight else halfScreenHeight, animationSpec = tween(durationMillis = 1000))
+    val diseaseViewModel: DiseaseViewModel = viewModel()
 
-        if (showDialog.value) {
+    if (showDialog.value) {
         ImagePicker(onImageCaptured = { uri ->
             uri?.let {
                 bitmap.value = createBitmapFromUri(context, it)
@@ -67,7 +69,7 @@ fun ResultScreen(predictionResult: FloatArray?, imageUri: Uri?, navController: N
 
     Box(modifier = Modifier.fillMaxSize()) {
         Image(
-            painter = rememberImagePainter(imageUri),
+            painter = rememberAsyncImagePainter(imageUri),
             contentDescription = "Captured Image",
             modifier = Modifier
                 .fillMaxWidth()
@@ -161,12 +163,13 @@ fun ResultScreen(predictionResult: FloatArray?, imageUri: Uri?, navController: N
                     Spacer(modifier = Modifier.weight(1f))
 
                     Image(
-                        painter = painterResource(id = if (isSaved) R.drawable.save else R.drawable.history),
+                        painter = painterResource(id = if (isSaved.value) R.drawable.save else R.drawable.history),
                         contentDescription = "save",
                         modifier = Modifier
                             .size(20.dp)
-                            .clickable(enabled = !isSaved) {
-                                isSaved = true
+                            .clickable(enabled = !isSaved.value) {
+                                isSaved.value = true
+                                diseaseViewModel.addDisease(context, disease , imageUri.toString())
                             }
                     )
                 }
@@ -401,3 +404,4 @@ fun Sigatoka(isFullScreen: Boolean){
         )
     }
 }
+

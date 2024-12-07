@@ -2,7 +2,6 @@ package com.example.drbanana
 
 import android.content.Context
 import android.graphics.Bitmap
-import android.graphics.Matrix
 import android.util.Log
 import org.tensorflow.lite.DataType
 import org.tensorflow.lite.support.tensorbuffer.TensorBuffer
@@ -10,22 +9,6 @@ import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import com.example.drbanana.ml.Model
 
-
-
-fun augmentImage(bitmap: Bitmap): Bitmap {
-    val matrix = Matrix()
-
-    // Apply random rotation
-    val rotation = (Math.random() * 360).toFloat()
-    matrix.postRotate(rotation)
-
-    // Apply random flipping
-    if (Math.random() > 0.5) {
-        matrix.postScale(-1f, 1f)
-    }
-
-    return Bitmap.createBitmap(bitmap, 0, 0, bitmap.width, bitmap.height, matrix, true)
-}
 
 fun bitmapToByteBuffer(bitmap: Bitmap, width: Int, height: Int): ByteBuffer {
     val resizedBitmap = Bitmap.createScaledBitmap(bitmap, width, height, true)

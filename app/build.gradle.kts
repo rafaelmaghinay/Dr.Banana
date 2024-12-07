@@ -2,6 +2,8 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
+    id("kotlin-kapt")
+    id("realm-android")
 }
 
 android {
@@ -11,7 +13,6 @@ android {
     defaultConfig {
         applicationId = "com.example.drbanana"
         minSdk = 23
-        compileSdk = 35
         targetSdk = 35
         versionCode = 1
         versionName = "1.0"
@@ -36,13 +37,18 @@ android {
         jvmTarget = "11"
     }
     buildFeatures {
-        compose = true
         mlModelBinding = true
     }
+    kapt {
+        javacOptions {
+            option("-source", "11")
+            option("-target", "11")
+        }
+    }
+
 }
 
 dependencies {
-
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
@@ -70,5 +76,11 @@ dependencies {
     implementation("org.tensorflow:tensorflow-lite:2.9.0")
     implementation("org.tensorflow:tensorflow-lite-support:0.3.1")
     implementation("org.tensorflow:tensorflow-lite-metadata:0.1.0")
-    implementation("io.realm:realm-android-library:10.10.1")
+    implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.5.1")
+    implementation("androidx.lifecycle:lifecycle-livedata-ktx:2.5.1")
+    implementation("androidx.compose.runtime:runtime-livedata:1.4.3")
+    implementation("androidx.lifecycle:lifecycle-livedata-ktx:2.6.1")
+
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.4")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.6.4")
 }

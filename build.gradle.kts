@@ -4,3 +4,14 @@ plugins {
     alias(libs.plugins.kotlin.android) apply false
     alias(libs.plugins.kotlin.compose) apply false
 }
+
+buildscript {
+    repositories {
+        google()
+        mavenCentral()
+    }
+    dependencies {
+        classpath("io.realm:realm-gradle-plugin:10.15.1")
+        classpath("com.android.tools.build:gradle:8.0.2")
+    }
+}

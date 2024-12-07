@@ -7,9 +7,9 @@ pluginManagement {
                 includeGroupByRegex("androidx.*")
             }
         }
-        mavenCentral()
         gradlePluginPortal()
-        jcenter()  // In case older versions are needed (TensorFlow has some older dependencies here)
+        google()
+        mavenCentral()
     }
 }
 dependencyResolutionManagement {
@@ -22,4 +22,3 @@ dependencyResolutionManagement {
 
 rootProject.name = "Dr.Banana"
 include(":app")
- 

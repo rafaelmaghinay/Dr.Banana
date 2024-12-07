@@ -12,9 +12,12 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Devices
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
+import androidx.navigation.compose.rememberNavController
 import com.example.drbanana.R
 
 @Composable
@@ -51,17 +54,17 @@ fun HomeScreen(navController: NavHostController) {
                     .padding(top = 16.dp)
             )
 
+            Spacer(modifier = Modifier.height(50.dp))
+
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(top = 100.dp)
-                    .size(width = 200.dp, height = 227.dp)
                     .background(color = Color.White)
                     .align(Alignment.CenterHorizontally)
             ) {
                 Column(
                     modifier = Modifier
-                        .fillMaxSize()
+                        .fillMaxWidth()
                         .padding(4.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
@@ -80,7 +83,7 @@ fun HomeScreen(navController: NavHostController) {
                                 fontSize = 8.sp,
                                 color = Color.Black,
                                 textAlign = TextAlign.Center,
-                                modifier = Modifier.size(67.dp, 40.dp)
+                                modifier = Modifier.width(67.dp)
                             )
                         }
                         Column(
@@ -99,8 +102,7 @@ fun HomeScreen(navController: NavHostController) {
                                 color = Color.Black,
                                 textAlign = TextAlign.Center,
                                 modifier = Modifier
-                                    .size(40.dp)
-                                    .wrapContentSize(Alignment.Center)
+                                    .width(40.dp)
                             )
                         }
                         Column(
@@ -117,13 +119,17 @@ fun HomeScreen(navController: NavHostController) {
                                 fontSize = 8.sp,
                                 color = Color.Black,
                                 textAlign = TextAlign.Center,
-                                modifier = Modifier.size(40.dp)
+                                modifier = Modifier.width(40.dp)
                             )
                         }
                     }
                     ScanButton(onImageCaptured = {}, navController = navController)
+
+                    Spacer(modifier = Modifier.height(8.dp))
                 }
             }
+
+            Spacer(modifier = Modifier.height(16.dp))
 
             Text(
                 text = "Simply Tap the Scan Button Below and Point at the banana tree to Diagnose!",
@@ -137,4 +143,10 @@ fun HomeScreen(navController: NavHostController) {
             )
         }
     }
+}
+
+@Preview(showBackground = true, device = Devices.PIXEL_4)
+@Composable
+fun HomeScreenPreview() {
+    HomeScreen(navController = rememberNavController())
 }

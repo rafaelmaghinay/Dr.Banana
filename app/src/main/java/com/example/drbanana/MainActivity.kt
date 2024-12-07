@@ -10,44 +10,64 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.core.app.ActivityCompat
+import android.content.pm.PackageManager
+import android.Manifest
+import android.widget.Toast
 import com.example.drbanana.ui.Navigation
 import com.example.drbanana.ui.SplashScreen
 import kotlinx.coroutines.delay
-import android.Manifest
-
 
 class MainActivity : ComponentActivity() {
+    private val PERMISSION_REQUEST_CODE = 0
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
             DrBananaTheme {
-                // Request permissions at runtime
-                val permissions = arrayOf(
-                    Manifest.permission.CAMERA,
-                    Manifest.permission.WRITE_EXTERNAL_STORAGE,
-                    Manifest.permission.READ_EXTERNAL_STORAGE
-                )
-                ActivityCompat.requestPermissions(this, permissions, 0)
                 AppStart()
             }
         }
     }
-}
 
-@Composable
-fun AppStart(){
-    val isSplashScreenVisible = remember { mutableStateOf(true) }
+    @Composable
+    fun AppStart() {
+        val isSplashScreenVisible = remember { mutableStateOf(true) }
 
-    // Control splash screen display duration
-    LaunchedEffect(Unit) {
-        delay(4000)  // Show splash screen for 2 seconds
-        isSplashScreenVisible.value = false
+        // Control splash screen display duration
+        LaunchedEffect(Unit) {
+            delay(4000)  // Show splash screen for 4 seconds
+            isSplashScreenVisible.value = false
+        }
+
+        if (isSplashScreenVisible.value) {
+            SplashScreen()
+        } else {
+            // Request permissions at runtime
+            val permissions = arrayOf(
+                Manifest.permission.CAMERA,
+                Manifest.permission.WRITE_EXTERNAL_STORAGE,
+                Manifest.permission.READ_EXTERNAL_STORAGE
+            )
+            ActivityCompat.requestPermissions(this@MainActivity, permissions, PERMISSION_REQUEST_CODE)
+            Navigation()  // Navigate to your main screen after splash
+        }
     }
 
-    if (isSplashScreenVisible.value) {
-        SplashScreen()
-    } else {
-        Navigation()  // Navigate to your main screen after splash
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<String>,
+        grantResults: IntArray
+    ) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        if (requestCode == PERMISSION_REQUEST_CODE) {
+            if (grantResults.isNotEmpty() && grantResults.all { it == PackageManager.PERMISSION_GRANTED }) {
+                // All permissions are granted
+                Toast.makeText(this, "Permissions granted", Toast.LENGTH_SHORT).show()
+            } else {
+                // Permissions are denied
+                Toast.makeText(this, "Permissions denied", Toast.LENGTH_SHORT).show()
+            }
+        }
     }
 }
 
