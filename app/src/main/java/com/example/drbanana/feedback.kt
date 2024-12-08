@@ -1,5 +1,6 @@
 package com.example.drbanana
 
+import android.content.Context
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -32,12 +33,25 @@ import androidx.compose.ui.unit.sp
 import com.example.drbanana.R
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.NavHostController
+import okhttp3.Call
+import okhttp3.Callback
+import okhttp3.MediaType.Companion.toMediaTypeOrNull
+import okhttp3.OkHttpClient
+import okhttp3.Request
+import okhttp3.RequestBody
+import okhttp3.Response
+import org.json.JSONArray
+import org.json.JSONObject
+import java.io.IOException
 
 @Composable
 fun FeedbackScreen(navController: NavHostController) {
     var rating by remember { mutableStateOf(0) }
+    val viewModel = DiseaseViewModel()
     var feedbackText by remember { mutableStateOf("") }
+    val context = LocalContext.current
 
     Box(
         modifier = Modifier
@@ -134,6 +148,7 @@ fun FeedbackScreen(navController: NavHostController) {
 
                     Button(
                         onClick = {
+                            sendFeedbackEmail(context, feedbackText, rating)
                         },
                         colors = ButtonDefaults.buttonColors(
                             containerColor = Color(0xFF61AF2B),
@@ -166,4 +181,50 @@ fun BananaRating(rating: Int, onRatingChanged: (Int) -> Unit) {
             Spacer(modifier = Modifier.width(4.dp))
         }
     }
+}
+
+fun sendFeedbackEmail(context: Context, feedbackText: String, rating: Int) {
+    val client = OkHttpClient()
+    val json = JSONObject().apply {
+        put("personalizations", JSONArray().apply {
+            put(JSONObject().apply {
+                put("to", JSONArray().apply {
+                    put(JSONObject().apply {
+                        put("email", "rafaelfmaghinay@su.edu.ph")
+                    })
+                })
+                put("subject", "Feedback from App")
+            })
+        })
+        put("from", JSONObject().apply {
+            put("email", "drbanana036@gmail.com")
+        })
+        put("content", JSONArray().apply {
+            put(JSONObject().apply {
+                put("type", "text/plain")
+                put("value", "Rating: $rating\nFeedback: $feedbackText")
+            })
+        })
+    }
+
+    val body = RequestBody.create("application/json; charset=utf-8".toMediaTypeOrNull(), json.toString())
+    val apiKey = BuildConfig.SENDGRID_API_KEY
+    val request = Request.Builder()
+        .url("https://api.sendgrid.com/v3/mail/send")
+        .post(body)
+        .addHeader("Authorization", "Bearer $apiKey")
+        .addHeader("Content-Type", "application/json")
+        .build()
+
+    client.newCall(request).enqueue(object : Callback {
+        override fun onFailure(call: Call, e: IOException) {
+            e.printStackTrace()
+        }
+
+        override fun onResponse(call: Call, response: Response) {
+            if (!response.isSuccessful) {
+                throw IOException("Unexpected code $response")
+            }
+        }
+    })
 }

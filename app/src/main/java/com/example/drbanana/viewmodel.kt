@@ -6,16 +6,27 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.drbanana.BuildConfig
+import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import io.realm.Realm
 import io.realm.kotlin.where
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import okhttp3.Call
+import okhttp3.Callback
+import okhttp3.MediaType
+import okhttp3.OkHttpClient
+import okhttp3.Request
+import okhttp3.RequestBody
+import okhttp3.Response
 import org.bson.types.ObjectId
 import java.io.File
 import java.io.FileOutputStream
+import java.io.IOException
 import java.io.InputStream
 import java.util.Date
+import kotlin.text.insert
 
 class DiseaseViewModel : ViewModel() {
     private val _diseases = MutableLiveData<List<Disease>>()
@@ -95,4 +106,6 @@ class DiseaseViewModel : ViewModel() {
             loadDiseases() // Reload the diseases to update the LiveData
         }
     }
+
+
 }

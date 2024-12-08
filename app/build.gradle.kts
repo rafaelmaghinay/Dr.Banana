@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
@@ -10,6 +12,11 @@ android {
     namespace = "com.example.drbanana"
     compileSdk = 35
 
+    buildFeatures {
+        mlModelBinding = true
+        buildConfig = true
+    }
+
     defaultConfig {
         applicationId = "com.example.drbanana"
         minSdk = 23
@@ -18,11 +25,23 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+
+        // Read the SendGrid API key from local.properties
+        val properties = Properties()
+        properties.load(project.rootProject.file("local.properties").inputStream())
+        val sendGridApiKey = properties.getProperty("SENDGRID_API_KEY")
+        println("SendGrid API Key: $sendGridApiKey")
+        buildConfigField("String", "SENDGRID_API_KEY", "\"$sendGridApiKey\"")
+    }
+
+    packagingOptions {
+        exclude("META-INF/DEPENDENCIES")
     }
 
     buildTypes {
         release {
-            isMinifyEnabled = false
+            isMinifyEnabled = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
@@ -36,9 +55,7 @@ android {
     kotlinOptions {
         jvmTarget = "11"
     }
-    buildFeatures {
-        mlModelBinding = true
-    }
+
     kapt {
         javacOptions {
             option("-source", "11")
@@ -83,4 +100,7 @@ dependencies {
 
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.4")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.6.4")
+
+    implementation("com.squareup.okhttp3:okhttp:4.9.3")
+    implementation("com.sendgrid:sendgrid-java:4.7.2")
 }
