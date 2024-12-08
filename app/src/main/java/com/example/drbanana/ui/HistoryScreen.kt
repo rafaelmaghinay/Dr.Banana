@@ -111,7 +111,6 @@ fun DiseaseItem(disease: Disease,  navController: NavHostController) {
             }
 
             Column(modifier = Modifier.padding(16.dp)) {
-                Spacer(modifier = Modifier.height(14.dp))
                 Text(text = formattedDate, fontSize = 12.sp, color = Color(0xFF585858))
                 Spacer(modifier = Modifier.height(11.dp))
                 Text(

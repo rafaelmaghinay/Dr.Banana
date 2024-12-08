@@ -36,6 +36,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.example.drbanana.FeedbackScreen
 import com.example.drbanana.R
 import com.example.drbanana.ui.theme.DrBananaTheme
 
@@ -46,7 +47,7 @@ fun Navigation() {
 
     Scaffold(
         topBar = {
-            if (currentDestination != "result/{imageUri}/{classificationResult}" && currentDestination != "recommendations/{diseaseId}") {
+            if (currentDestination != "result/{imageUri}/{classificationResult}" && currentDestination != "recommendations/{diseaseId}" && currentDestination != "feedback") {
                 TopAppBar(
                     title = {
                         Text("Dr.Banana",
@@ -64,7 +65,7 @@ fun Navigation() {
             }
         },
         bottomBar = {
-            if (currentDestination != "result/{imageUri}/{classificationResult}" && currentDestination != "recommendations/{diseaseId}") {
+            if (currentDestination != "result/{imageUri}/{classificationResult}" && currentDestination != "recommendations/{diseaseId}" && currentDestination != "feedback") {
                 BottomNavigationBar(navController)
             }
         }
@@ -108,6 +109,9 @@ fun NavigationHost(navController: NavHostController) {
         composable("recommendations/{diseaseId}") { backStackEntry ->
             val diseaseId = backStackEntry.arguments?.getString("diseaseId")
             RecommendationsScreen(diseaseId = diseaseId, navController)
+        }
+        composable("feedback") {
+            FeedbackScreen(navController)
         }
     }
 }

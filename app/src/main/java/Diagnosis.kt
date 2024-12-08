@@ -3,6 +3,7 @@
 import android.graphics.Bitmap
 import android.net.Uri
 import android.util.Log
+import androidx.activity.compose.BackHandler
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.tween
@@ -20,6 +21,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.ui.Alignment
@@ -51,8 +53,20 @@ fun ResultScreen(predictionResult: FloatArray?, imageUri: Uri?, navController: N
     val savedDiseaseId = remember { mutableStateOf<ObjectId?>(null) }
     val screenHeight = LocalConfiguration.current.screenHeightDp.dp
     val halfScreenHeight = (screenHeight / 2) + 25.dp
-    val targetHeight by animateDpAsState(targetValue = if (isFullScreen) screenHeight else halfScreenHeight, animationSpec = tween(durationMillis = 1000))
+    val targetHeight by animateDpAsState(
+        targetValue = if (isFullScreen) screenHeight else halfScreenHeight,
+        animationSpec = tween(durationMillis = 1000)
+    )
     val diseaseViewModel: DiseaseViewModel = viewModel()
+    val noTreeDialog = remember { mutableStateOf(false) }
+
+    BackHandler {
+        navController.navigate("home") {
+            popUpTo(navController.graph.startDestinationId) {
+                inclusive = true
+            }
+        }
+    }
 
     if (showDialog.value) {
         ImagePicker(onImageCaptured = { uri ->
@@ -67,6 +81,56 @@ fun ResultScreen(predictionResult: FloatArray?, imageUri: Uri?, navController: N
             }
             showDialog.value = false
         }, onDismiss = { showDialog.value = false })
+    }
+
+    if (noTreeDialog.value) {
+        AlertDialog(
+            onDismissRequest = { noTreeDialog.value = false
+                navController.navigate("home") },
+            title = {
+                Text(
+                    "No Banana Leaves Detected",
+                    color = Color.Black,
+                    fontWeight = Bold,
+                    fontSize = 20.sp
+                )
+            },
+            text = {
+                Text(
+                    "It seems that no banana leaves were detected in the image. Please Try again!",
+                    color = Color(0xFF585858),
+                    fontSize = 14.sp
+                )
+            },
+            confirmButton = {},
+            dismissButton = {
+                Column(
+                    modifier = Modifier.padding(all = 8.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text(
+                        text = "Back to home",
+                        modifier = Modifier
+                            .clickable {
+                                noTreeDialog.value = false
+                                navController.navigate("home")
+                            }
+                            .padding(8.dp),
+                        color = Color(0xFF61AF2B)
+                    )
+                    Text(
+                        text = "Scan Again",
+                        modifier = Modifier
+                            .clickable {
+                                showDialog.value = true
+                            }
+                            .padding(8.dp),
+                        color = Color(0xFF61AF2B)
+                    )
+                }
+            },
+            containerColor = Color.White
+        )
     }
 
     Box(modifier = Modifier.fillMaxSize()) {
@@ -169,7 +233,7 @@ fun ResultScreen(predictionResult: FloatArray?, imageUri: Uri?, navController: N
                         contentDescription = "save",
                         modifier = Modifier
                             .size(20.dp)
-                            .clickable(enabled = !isSaved.value) {
+                            .clickable(enabled = disease != "Healthy" && !isSaved.value) {
                                 isSaved.value = true
                                 diseaseViewModel.addDisease(context, disease, imageUri.toString()) { diseaseId ->
                                     savedDiseaseId.value = diseaseId
@@ -183,12 +247,23 @@ fun ResultScreen(predictionResult: FloatArray?, imageUri: Uri?, navController: N
                         Text(
                             text = "Your plant is healthy!",
                             fontSize = 14.sp,
-                            color = Color.Black
+                            color = Color.Black,
+                            fontWeight = Bold
                         )
                     }
                     "Cordana Leaf Spot" -> { Cordana(isFullScreen) }
                     "Panama Disease" -> { Panama(isFullScreen) }
                     "Black/Yellow Sigatoka" -> { Sigatoka(isFullScreen)}
+                    "No Tree" -> {
+                        noTreeDialog.value = true
+                    }
+                    else -> {
+                        Text(
+                            text = "No data available",
+                            fontSize = 14.sp,
+                            color = Color.Black
+                        )
+                    }
                 }
 
                 Spacer(modifier = Modifier.weight(1f))
@@ -209,6 +284,7 @@ fun ResultScreen(predictionResult: FloatArray?, imageUri: Uri?, navController: N
                             }
                         }
                     },
+                    enabled = disease != "Healthy",
                     colors = ButtonDefaults.buttonColors(
                         containerColor = Color(0xFF61F878),
                         contentColor = Color.Black
