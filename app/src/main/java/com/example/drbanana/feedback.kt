@@ -14,6 +14,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.Divider
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
@@ -116,7 +118,7 @@ fun FeedbackScreen(navController: NavHostController) {
                         placeholder = { Text("Enter your feedback here") },
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(150.dp),
+                            .height(250.dp),
                         colors = TextFieldDefaults.colors(
                             focusedContainerColor = Color(0xFFF0F0F0),
                             unfocusedContainerColor = Color(0xFFF0F0F0),
@@ -127,6 +129,22 @@ fun FeedbackScreen(navController: NavHostController) {
                             cursorColor = Color(0xFF61AF2B) // Change this to your desired color
                         )
                     )
+
+                    Spacer(modifier = Modifier.weight(1f))
+
+                    Button(
+                        onClick = {
+                        },
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color(0xFF61AF2B),
+                            contentColor = White
+                        ),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(50.dp)
+                    ) {
+                        Text(text = "Submit Feedback", fontSize = 16.sp)
+                    }
                 }
             }
         }
