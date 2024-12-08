@@ -34,6 +34,7 @@ import androidx.compose.ui.unit.sp
 import com.example.drbanana.R
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.NavHostController
 import okhttp3.Call
@@ -239,7 +240,7 @@ fun sendFeedbackEmail(context: Context, feedbackText: String, rating: Int) {
 
 fun showAlertDialog(context: Context, title: String, message: String) {
     val positiveButtonText = if (title == "Success") "OK" else "Try again Later"
-    val positiveButtonColor = if (title == "Success") Color.Green else Color.Red
+    val positiveButtonColor = if (title == "Success") Color.Green.toArgb() else Color.Red.toArgb()
 
     val alertDialog = AlertDialog.Builder(context)
         .setTitle(title)
