@@ -1,5 +1,6 @@
 package com.example.drbanana
 
+import android.app.AlertDialog
 import android.content.Context
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -219,12 +220,40 @@ fun sendFeedbackEmail(context: Context, feedbackText: String, rating: Int) {
     client.newCall(request).enqueue(object : Callback {
         override fun onFailure(call: Call, e: IOException) {
             e.printStackTrace()
+            (context as MainActivity).runOnUiThread {
+                showAlertDialog(context, "Error", "Failed to send feedback email.")
+            }
         }
 
         override fun onResponse(call: Call, response: Response) {
-            if (!response.isSuccessful) {
-                throw IOException("Unexpected code $response")
+            (context as MainActivity).runOnUiThread {
+                if (response.isSuccessful) {
+                    showAlertDialog(context, "Success", "Feedback email sent successfully.")
+                } else {
+                    showAlertDialog(context, "Error", "Failed to send feedback email. Code: ${response.code}")
+                }
             }
         }
     })
+}
+
+fun showAlertDialog(context: Context, title: String, message: String) {
+    val positiveButtonText = if (title == "Success") "OK" else "Try again Later"
+    val positiveButtonColor = if (title == "Success") Color.Green else Color.Red
+
+    val alertDialog = AlertDialog.Builder(context)
+        .setTitle(title)
+        .setMessage(message)
+        .setPositiveButton(positiveButtonText, null)
+        .create()
+
+    alertDialog.setOnShowListener {
+        val positiveButton = alertDialog.getButton(AlertDialog.BUTTON_POSITIVE)
+        positiveButton.setTextColor(positiveButtonColor)
+        positiveButton.setOnClickListener {
+            alertDialog.dismiss()
+        }
+    }
+
+    alertDialog.show()
 }
