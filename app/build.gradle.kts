@@ -40,6 +40,9 @@ android {
     }
 
     buildTypes {
+        debug {
+            buildConfigField("boolean", "ENABLE_DETAILED_LOGGING", "true")
+        }
         release {
             isMinifyEnabled = true
             proguardFiles(

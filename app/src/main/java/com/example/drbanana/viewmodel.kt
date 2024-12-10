@@ -107,5 +107,14 @@ class DiseaseViewModel : ViewModel() {
         }
     }
 
-
+    fun deleteAllDiseases() {
+        viewModelScope.launch(Dispatchers.IO) {
+            val realm = Realm.getDefaultInstance()
+            realm.executeTransaction {
+                it.deleteAll()
+            }
+            realm.close()
+            loadDiseases() // Reload the diseases to update the LiveData
+        }
+    }
 }
