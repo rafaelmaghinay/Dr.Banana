@@ -5,6 +5,7 @@ import android.net.Uri
 import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -47,7 +48,7 @@ fun Navigation() {
 
     Scaffold(
         topBar = {
-            if (currentDestination != "result/{imageUri}/{classificationResult}" && currentDestination != "recommendations/{diseaseId}" && currentDestination != "feedback") {
+            if (currentDestination != "result/{imageUri}/{classificationResult}" && currentDestination != "recommendations/{diseaseId}" && currentDestination != "feedback" && currentDestination != "help") {
                 TopAppBar(
                     title = {
                         Text("Dr.Banana",
@@ -60,12 +61,24 @@ fun Navigation() {
                             modifier = Modifier.padding(8.dp)
                         )
                     },
+
+                    actions = {
+                        Image(
+                            painter = painterResource(id = R.drawable.help), // Replace with your photo resource
+                            contentDescription = "help",
+                            modifier = Modifier
+                                .padding(16.dp)
+                                .clickable {
+                                    navController.navigate("help")
+                                }
+                        )
+                    },
                     backgroundColor = Color(0xFFD0FFCF),
                 )
             }
         },
         bottomBar = {
-            if (currentDestination != "result/{imageUri}/{classificationResult}" && currentDestination != "recommendations/{diseaseId}" && currentDestination != "feedback") {
+            if (currentDestination != "result/{imageUri}/{classificationResult}" && currentDestination != "recommendations/{diseaseId}" && currentDestination != "feedback" && currentDestination != "help") {
                 BottomNavigationBar(navController)
             }
         }
@@ -112,6 +125,10 @@ fun NavigationHost(navController: NavHostController) {
         }
         composable("feedback") {
             FeedbackScreen(navController)
+        }
+
+        composable("help") {
+            HelpScreen(navController)
         }
     }
 }
@@ -193,11 +210,3 @@ data class BottomNavItem(
     val route: String,
     val icon: Painter
 )
-
-@Preview(showBackground = true)
-@Composable
-fun NavigationPreview() {
-    DrBananaTheme {
-        Navigation()
-    }
-}
